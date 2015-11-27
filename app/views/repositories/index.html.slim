@@ -1,0 +1,31 @@
+.header.clearfix
+  nav
+    ul.nav.nav-pills.pull-right
+      li class=( params[:c].nil? && 'active')
+        = link_to '待处理', repositories_path
+      li class=( params[:c] == 'like' && 'active')
+        = link_to '喜欢', repositories_path(c: :like)
+      li class=( params[:c] == 'all' && 'active')
+        = link_to '所有', repositories_path(c: :all)
+  h3 GitHub 推
+table.table.table-bordered
+  thead
+    tr
+      th #
+      th 项目
+      th 描述
+      th 语言
+  tbody
+    - @items.each do |repository|
+      - cache [repository, 'index'] do
+        tr
+          th
+            = "##{repository.id}"
+          th
+            = link_to repository.full_name, repository_path(repository)
+          th
+            = repository.description
+          th
+            = repository.language.try(:name)
+
+= paginate @items

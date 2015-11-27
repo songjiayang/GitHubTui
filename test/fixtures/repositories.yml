@@ -1,0 +1,37 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  repository_id: MyString
+  name: MyString
+  full_name: MyString
+  html_url: MyString
+  description: MyString
+  url: MyString
+  publish_at: 2015-10-30 23:13:28
+  git_url: MyString
+  homepage: MyString
+  size: 1
+  stargazers_count: 1
+  watchers_count: 1
+  forks_count: 1
+  language: 1
+  default_branch: MyString
+  process_state: 1
+
+two:
+  repository_id: MyString
+  name: MyString
+  full_name: MyString
+  html_url: MyString
+  description: MyString
+  url: MyString
+  publish_at: 2015-10-30 23:13:28
+  git_url: MyString
+  homepage: MyString
+  size: 1
+  stargazers_count: 1
+  watchers_count: 1
+  forks_count: 1
+  language: 1
+  default_branch: MyString
+  process_state: 1

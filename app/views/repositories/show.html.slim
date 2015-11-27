@@ -1,0 +1,42 @@
+.page-header
+  h1
+    = @repository.full_name
+  p.statistics
+    span
+      | stars :
+      = @repository.stargazers_count
+    span
+      | watchers :
+      = @repository.watchers_count
+    span
+      | forks :
+      = @repository.forks_count
+
+.page-description
+  p
+    = @repository.description
+    | .
+    - if @repository.homepage.present?
+      = link_to @repository.homepage, @repository.homepage, target: '_blank'
+
+= @repository.readme && @repository.readme.raw_html.html_safe
+
+.nav__bar.btn-group
+  .btn
+    = link_to root_url do
+      i.fa.fa-home.fa-2x
+  .btn
+    = link_to @repository.html_url, target: '_blank' do
+      i.fa.fa-github.fa-2x
+  .btn
+    = link_to repository_path(id: @repository.id-1) do
+      i.fa.fa-chevron-left.fa-2x
+  .btn
+    = link_to repository_path(id: @repository.id+1) do
+      i.fa.fa-chevron-right.fa-2x
+  .btn
+    = link_to like_repository_path(@repository), method: :patch do
+      i.fa.fa-2x.fa-heart class=(@repository.liked? && 'like')
+  .btn
+    = link_to dislike_repository_path(@repository), method: :patch do
+      i.fa.fa-2x.fa-heartbeat class=(@repository.disliked? && 'dislike')

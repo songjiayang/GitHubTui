@@ -1,0 +1,635 @@
+<article class="markdown-body entry-content" itemprop="mainContentOfPage"><h1><a id="user-content-octokit" class="anchor" href="#octokit" aria-hidden="true"><span class="octicon octicon-link"></span></a>Octokit</h1>
+
+<p>Ruby toolkit for the GitHub API.</p>
+
+<p><a href="https://camo.githubusercontent.com/59b6617186cc7fac00151974e84bfbc1f4b973a3/687474703a2f2f636c2e6c792f696d6167652f3359303133483041327a337a2f67756e64616d2d727562792e706e67" target="_blank"><img src="https://camo.githubusercontent.com/59b6617186cc7fac00151974e84bfbc1f4b973a3/687474703a2f2f636c2e6c792f696d6167652f3359303133483041327a337a2f67756e64616d2d727562792e706e67" alt="Logo" data-canonical-src="http://cl.ly/image/3Y013H0A2z3z/gundam-ruby.png" style="max-width:100%;"></a></p>
+
+<p>Upgrading? Check the <a href="#upgrading-guide">Upgrade Guide</a> before bumping to a new
+<a href="http://semver.org/">major version</a>.</p>
+
+<h2><a id="user-content-philosophy" class="anchor" href="#philosophy" aria-hidden="true"><span class="octicon octicon-link"></span></a>Philosophy</h2>
+
+<p>API wrappers <a href="http://wynnnetherland.com/journal/what-makes-a-good-api-wrapper">should reflect the idioms of the language in which they were
+written</a>. Octokit.rb wraps the <a href="http://developer.github.com">GitHub API</a> in a flat API
+client that follows Ruby conventions and requires little knowledge of REST.
+Most methods have positional arguments for required input and an options hash
+for optional parameters, headers, or other options:</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c"># Fetch a README with Accept header for HTML format</span>
+<span class="pl-c1">Octokit</span>.readme <span class="pl-s"><span class="pl-pds">'</span>al3x/sovereign<span class="pl-pds">'</span></span>, <span class="pl-c1">:accept</span> =&gt; <span class="pl-s"><span class="pl-pds">'</span>application/vnd.github.html<span class="pl-pds">'</span></span></pre></div>
+
+<h2><a id="user-content-quick-start" class="anchor" href="#quick-start" aria-hidden="true"><span class="octicon octicon-link"></span></a>Quick start</h2>
+
+<p>Install via Rubygems</p>
+
+<pre><code>gem install octokit
+</code></pre>
+
+<p>... or add to your Gemfile</p>
+
+<pre><code>gem "octokit", "~&gt; 4.0"
+</code></pre>
+
+<h3><a id="user-content-making-requests" class="anchor" href="#making-requests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Making requests</h3>
+
+<p><a href="http://octokit.github.io/octokit.rb/method_list.html">API methods</a> are available as module methods (consuming module-level
+configuration) or as client instance methods.</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c"># Provide authentication credentials</span>
+<span class="pl-c1">Octokit</span>.configure <span class="pl-k">do </span>|<span class="pl-smi">c</span>|
+  c.login <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>defunkt<span class="pl-pds">'</span></span>
+  c.password <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>c0d3b4ssssss!<span class="pl-pds">'</span></span>
+<span class="pl-k">end</span>
+
+<span class="pl-c"># Fetch the current user</span>
+<span class="pl-c1">Octokit</span>.user</pre></div>
+
+<p>or</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c"># Provide authentication credentials</span>
+client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">Client</span>.<span class="pl-k">new</span>(<span class="pl-c1">:login</span> =&gt; <span class="pl-s"><span class="pl-pds">'</span>defunkt<span class="pl-pds">'</span></span>, <span class="pl-c1">:password</span> =&gt; <span class="pl-s"><span class="pl-pds">'</span>c0d3b4ssssss!<span class="pl-pds">'</span></span>)
+<span class="pl-c"># Fetch the current user</span>
+client.user</pre></div>
+
+<h3><a id="user-content-consuming-resources" class="anchor" href="#consuming-resources" aria-hidden="true"><span class="octicon octicon-link"></span></a>Consuming resources</h3>
+
+<p>Most methods return a <code>Resource</code> object which provides dot notation and <code>[]</code>
+access for fields returned in the API response.</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c"># Fetch a user</span>
+user <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>.user <span class="pl-s"><span class="pl-pds">'</span>jbarnette<span class="pl-pds">'</span></span>
+puts user.name
+<span class="pl-c"># =&gt; "John Barnette"</span>
+puts user.fields
+<span class="pl-c"># =&gt; &lt;Set: {:login, :id, :gravatar_id, :type, :name, :company, :blog, :location, :email, :hireable, :bio, :public_repos, :followers, :following, :created_at, :updated_at, :public_gists}&gt;</span>
+puts user[<span class="pl-c1">:company</span>]
+<span class="pl-c"># =&gt; "GitHub"</span>
+user.rels[<span class="pl-c1">:gists</span>].href
+<span class="pl-c"># =&gt; "https://api.github.com/users/jbarnette/gists"</span></pre></div>
+
+<p><strong>Note:</strong> URL fields are culled into a separate <code>.rels</code> collection for easier
+<a href="#hypermedia-agent">Hypermedia</a> support.</p>
+
+<h3><a id="user-content-accessing-http-responses" class="anchor" href="#accessing-http-responses" aria-hidden="true"><span class="octicon octicon-link"></span></a>Accessing HTTP responses</h3>
+
+<p>While most methods return a <code>Resource</code> object or a Boolean, sometimes you may
+need access to the raw HTTP response headers. You can access the last HTTP
+response with <code>Client#last_response</code>:</p>
+
+<div class="highlight highlight-source-ruby"><pre>user      <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>.user <span class="pl-s"><span class="pl-pds">'</span>andrewpthorp<span class="pl-pds">'</span></span>
+response  <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>.last_response
+etag      <span class="pl-k">=</span> response.headers[<span class="pl-c1">:etag</span>]</pre></div>
+
+<h2><a id="user-content-authentication" class="anchor" href="#authentication" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authentication</h2>
+
+<p>Octokit supports the various <a href="http://developer.github.com/v3/#authentication">authentication methods supported by the GitHub
+API</a>:</p>
+
+<h3><a id="user-content-basic-authentication" class="anchor" href="#basic-authentication" aria-hidden="true"><span class="octicon octicon-link"></span></a>Basic Authentication</h3>
+
+<p>Using your GitHub username and password is the easiest way to get started
+making authenticated requests:</p>
+
+<div class="highlight highlight-source-ruby"><pre>client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">Client</span>.<span class="pl-k">new</span> \
+  <span class="pl-c1">:login</span>    =&gt; <span class="pl-s"><span class="pl-pds">'</span>defunkt<span class="pl-pds">'</span></span>,
+  <span class="pl-c1">:password</span> =&gt; <span class="pl-s"><span class="pl-pds">'</span>c0d3b4ssssss!<span class="pl-pds">'</span></span>
+
+user <span class="pl-k">=</span> client.user
+user.login
+<span class="pl-c"># =&gt; "defunkt"</span></pre></div>
+
+<p>While Basic Authentication allows you to get started quickly, OAuth access
+tokens are the preferred way to authenticate on behalf of users.</p>
+
+<h3><a id="user-content-oauth-access-tokens" class="anchor" href="#oauth-access-tokens" aria-hidden="true"><span class="octicon octicon-link"></span></a>OAuth access tokens</h3>
+
+<p><a href="http://developer.github.com/v3/oauth/">OAuth access tokens</a> provide two main benefits over using your username
+and password:</p>
+
+<ul>
+<li><strong>Revokable access</strong>. Access tokens can be revoked, removing access for only
+that token without having to change your password everywhere.</li>
+<li><strong>Limited access</strong>. Access tokens have <a href="http://developer.github.com/v3/oauth/#scopes">access scopes</a> which allow for more
+granular access to API resources. For instance, you can grant a third party
+access to your gists but not your private repositories.</li>
+</ul>
+
+<p>To use an access token with the Octokit client, pass your token in the
+<code>:access_token</code> options parameter in lieu of your username and password:</p>
+
+<div class="highlight highlight-source-ruby"><pre>client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">Client</span>.<span class="pl-k">new</span>(<span class="pl-c1">:access_token</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>&lt;your 40 char token&gt;<span class="pl-pds">"</span></span>)
+
+user <span class="pl-k">=</span> client.user
+user.login
+<span class="pl-c"># =&gt; "defunkt"</span></pre></div>
+
+<p>You can <a href="https://help.github.com/articles/creating-an-access-token-for-command-line-use">create access tokens through your GitHub Account Settings</a>
+or with a basic authenticated Octokit client:</p>
+
+<div class="highlight highlight-source-ruby"><pre>client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">Client</span>.<span class="pl-k">new</span> \
+  <span class="pl-c1">:login</span>    =&gt; <span class="pl-s"><span class="pl-pds">'</span>defunkt<span class="pl-pds">'</span></span>,
+  <span class="pl-c1">:password</span> =&gt; <span class="pl-s"><span class="pl-pds">'</span>c0d3b4ssssss!<span class="pl-pds">'</span></span>
+
+client.create_authorization(<span class="pl-c1">:scopes</span> =&gt; [<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>], <span class="pl-c1">:note</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>Name of token<span class="pl-pds">"</span></span>)
+<span class="pl-c"># =&gt; &lt;your new oauth token&gt;</span></pre></div>
+
+<h3><a id="user-content-two-factor-authentication" class="anchor" href="#two-factor-authentication" aria-hidden="true"><span class="octicon octicon-link"></span></a>Two-Factor Authentication</h3>
+
+<p><a href="https://help.github.com/articles/about-two-factor-authentication">Two-Factor Authentication</a> brings added security to the account by requiring more information to login.</p>
+
+<p>Using two-factor authentication for API calls is as simple as adding the <a href="http://developer.github.com/v3/auth/#working-with-two-factor-authentication">required header</a> as an option:</p>
+
+<div class="highlight highlight-source-ruby"><pre>client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">Client</span>.<span class="pl-k">new</span> \
+  <span class="pl-c1">:login</span>    =&gt; <span class="pl-s"><span class="pl-pds">'</span>defunkt<span class="pl-pds">'</span></span>,
+  <span class="pl-c1">:password</span> =&gt; <span class="pl-s"><span class="pl-pds">'</span>c0d3b4ssssss!<span class="pl-pds">'</span></span>
+
+user <span class="pl-k">=</span> client.user(<span class="pl-s"><span class="pl-pds">"</span>defunkt<span class="pl-pds">"</span></span>, <span class="pl-c1">:headers</span> =&gt; { <span class="pl-s"><span class="pl-pds">"</span>X-GitHub-OTP<span class="pl-pds">"</span></span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>&lt;your 2FA token&gt;<span class="pl-pds">"</span></span> })</pre></div>
+
+<p>As you can imagine, this gets annoying quick since two-factor auth tokens are very short lived. So it is recommended to create an oauth token for the user to communicate with the API:</p>
+
+<div class="highlight highlight-source-ruby"><pre>client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">Client</span>.<span class="pl-k">new</span> \
+  <span class="pl-c1">:login</span>    =&gt; <span class="pl-s"><span class="pl-pds">'</span>defunkt<span class="pl-pds">'</span></span>,
+  <span class="pl-c1">:password</span> =&gt; <span class="pl-s"><span class="pl-pds">'</span>c0d3b4ssssss!<span class="pl-pds">'</span></span>
+
+client.create_authorization(<span class="pl-c1">:scopes</span> =&gt; [<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>], <span class="pl-c1">:note</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>Name of token<span class="pl-pds">"</span></span>,
+                            <span class="pl-c1">:headers</span> =&gt; { <span class="pl-s"><span class="pl-pds">"</span>X-GitHub-OTP<span class="pl-pds">"</span></span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>&lt;your 2FA token&gt;<span class="pl-pds">"</span></span> })
+<span class="pl-c"># =&gt; &lt;your new oauth token&gt;</span></pre></div>
+
+<h3><a id="user-content-using-a-netrc-file" class="anchor" href="#using-a-netrc-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using a .netrc file</h3>
+
+<p>Octokit supports reading credentials from a netrc file (defaulting to
+<code>~/.netrc</code>).  Given these lines in your netrc:</p>
+
+<pre><code>machine api.github.com
+  login defunkt
+  password c0d3b4ssssss!
+</code></pre>
+
+<p>You can now create a client with those credentials:</p>
+
+<div class="highlight highlight-source-ruby"><pre>client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">Client</span>.<span class="pl-k">new</span>(<span class="pl-c1">:netrc</span> =&gt; <span class="pl-c1">true</span>)
+client.login
+<span class="pl-c"># =&gt; "defunkt"</span></pre></div>
+
+<p>But <em>I want to use OAuth</em> you say. Since the GitHub API supports using an OAuth
+token as a Basic password, you totally can:</p>
+
+<pre><code>machine api.github.com
+  login defunkt
+  password &lt;your 40 char token&gt;
+</code></pre>
+
+<p><strong>Note:</strong> Support for netrc requires adding the <a href="https://rubygems.org/gems/netrc">netrc gem</a> to your Gemfile
+or <code>.gemspec</code>.</p>
+
+<h3><a id="user-content-application-authentication" class="anchor" href="#application-authentication" aria-hidden="true"><span class="octicon octicon-link"></span></a>Application authentication</h3>
+
+<p>Octokit also supports application-only authentication <a href="http://developer.github.com/v3/#increasing-the-unauthenticated-rate-limit-for-oauth-applications">using OAuth application client
+credentials</a>. Using application credentials will result in making
+anonymous API calls on behalf of an application in order to take advantage of
+the higher rate limit.</p>
+
+<div class="highlight highlight-source-ruby"><pre>client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">Client</span>.<span class="pl-k">new</span> \
+  <span class="pl-c1">:client_id</span>     =&gt; <span class="pl-s"><span class="pl-pds">"</span>&lt;your 20 char id&gt;<span class="pl-pds">"</span></span>,
+  <span class="pl-c1">:client_secret</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>&lt;your 40 char secret&gt;<span class="pl-pds">"</span></span>
+
+user <span class="pl-k">=</span> client.user <span class="pl-s"><span class="pl-pds">'</span>defunkt<span class="pl-pds">'</span></span></pre></div>
+
+<h2><a id="user-content-pagination" class="anchor" href="#pagination" aria-hidden="true"><span class="octicon octicon-link"></span></a>Pagination</h2>
+
+<p>Many GitHub API resources are <a href="http://developer.github.com/v3/#pagination">paginated</a>. While you may be tempted to start
+adding <code>:page</code> parameters to your calls, the API returns links to the next,
+previous, and last pages for you in the <code>Link</code> response header as <a href="#hypermedia-agent">Hypermedia
+link relations</a>.</p>
+
+<div class="highlight highlight-source-ruby"><pre>issues <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>.issues <span class="pl-s"><span class="pl-pds">'</span>rails/rails<span class="pl-pds">'</span></span>, <span class="pl-c1">:per_page</span> =&gt; <span class="pl-c1">100</span>
+issues.concat <span class="pl-c1">Octokit</span>.last_response.rels[<span class="pl-c1">:next</span>].get.data</pre></div>
+
+<h3><a id="user-content-auto-pagination" class="anchor" href="#auto-pagination" aria-hidden="true"><span class="octicon octicon-link"></span></a>Auto pagination</h3>
+
+<p>For smallish resource lists, Octokit provides auto pagination. When this is
+enabled, calls for paginated resources will fetch and concatenate the results
+from every page into a single array:</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c1">Octokit</span>.auto_paginate <span class="pl-k">=</span> <span class="pl-c1">true</span>
+issues <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>.issues <span class="pl-s"><span class="pl-pds">'</span>rails/rails<span class="pl-pds">'</span></span>
+issues.length
+
+<span class="pl-c"># =&gt; 702</span></pre></div>
+
+<p><strong>Note:</strong> While Octokit auto pagination will set the page size to the maximum
+<code>100</code>, and seek to not overstep your rate limit, you probably want to use a
+custom pattern for traversing large lists.</p>
+
+<h2><a id="user-content-working-with-github-enterprise" class="anchor" href="#working-with-github-enterprise" aria-hidden="true"><span class="octicon octicon-link"></span></a>Working with GitHub Enterprise</h2>
+
+<p>With a bit of setup, you can also use Octokit with your Github Enterprise instance.</p>
+
+<h3><a id="user-content-interacting-with-the-githubcom-apis-in-github-enterprise" class="anchor" href="#interacting-with-the-githubcom-apis-in-github-enterprise" aria-hidden="true"><span class="octicon octicon-link"></span></a>Interacting with the GitHub.com APIs in GitHub Enterprise</h3>
+
+<p>To interact with the "regular" GitHub.com APIs in GitHub Enterprise, simply configure the <code>api_endpoint</code> to match your hostname. For example:</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c1">Octokit</span>.configure <span class="pl-k">do </span>|<span class="pl-smi">c</span>|
+  c.api_endpoint <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>&lt;hostname&gt;/api/v3/<span class="pl-pds">"</span></span>
+<span class="pl-k">end</span>
+client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">Client</span>.<span class="pl-k">new</span>(<span class="pl-c1">:access_token</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>&lt;your 40 char token&gt;<span class="pl-pds">"</span></span>)</pre></div>
+
+<h3><a id="user-content-interacting-with-the-github-enterprise-admin-apis" class="anchor" href="#interacting-with-the-github-enterprise-admin-apis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Interacting with the GitHub Enterprise Admin APIs</h3>
+
+<p>The GitHub Enterprise Admin APIs are under a different client: <code>EnterpriseAdminClient</code>. You'll need to have an administrator account in order to use these APIs.</p>
+
+<div class="highlight highlight-source-ruby"><pre>admin_client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">EnterpriseAdminClient</span>.<span class="pl-k">new</span> \
+                          <span class="pl-c1">:access_token</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>&lt;your 40 char token&gt;<span class="pl-pds">"</span></span>,
+                          <span class="pl-c1">:api_endpoint</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>https://&lt;hostname&gt;/api/v3/<span class="pl-pds">"</span></span>
+
+<span class="pl-c"># or</span>
+<span class="pl-c1">Octokit</span>.configure <span class="pl-k">do </span>|<span class="pl-smi">c</span>|
+  c.api_endpoint <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>https://hostname/api/v3/<span class="pl-pds">"</span></span>
+  c.access_token <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>&lt;your 40 char token&gt;<span class="pl-pds">"</span></span>
+<span class="pl-k">end</span>
+admin_client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>.enterprise_admin_client</pre></div>
+
+<h3><a id="user-content-interacting-with-the-github-enterprise-management-console-apis" class="anchor" href="#interacting-with-the-github-enterprise-management-console-apis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Interacting with the GitHub Enterprise Management Console APIs</h3>
+
+<p>The GitHub Enterprise Management Console APIs are also under a separate client: <code>EnterpriseManagementConsoleClient</code>. In order to use it, you'll need to provide both your management console password as well as the endpoint to your management console. This is different than the API endpoint provided above.</p>
+
+<div class="highlight highlight-source-ruby"><pre>management_console_client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>::<span class="pl-c1">EnterpriseManagementConsoleClient</span>.<span class="pl-k">new</span> \
+                          <span class="pl-c1">:management_console_password</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>secret<span class="pl-pds">"</span></span>,
+                          <span class="pl-c1">:management_console_endpoint</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>https://hostname:8633<span class="pl-pds">"</span></span>
+<span class="pl-c"># or</span>
+<span class="pl-c1">Octokit</span>.configure <span class="pl-k">do </span>|<span class="pl-smi">c</span>|
+  c.management_console_endpoint <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>https://hostname:8633<span class="pl-pds">"</span></span>
+  c.management_console_password <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>secret<span class="pl-pds">"</span></span>
+<span class="pl-k">end</span>
+management_console_client <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>.enterprise_management_console_client</pre></div>
+
+<h3><a id="user-content-ssl-connection-errors" class="anchor" href="#ssl-connection-errors" aria-hidden="true"><span class="octicon octicon-link"></span></a>SSL Connection Errors</h3>
+
+<p>You <em>may</em> need to disable SSL temporarily while first setting up your GitHub Enterprise install. You can do that with the following configuration:</p>
+
+<div class="highlight highlight-source-ruby"><pre>client.connection_options[<span class="pl-c1">:ssl</span>] <span class="pl-k">=</span> { <span class="pl-c1">:verify</span> =&gt; <span class="pl-c1">false</span> }</pre></div>
+
+<p>Do remember to turn <code>:verify</code> back to <code>true</code>, as it's important for secure communication.</p>
+
+<h2><a id="user-content-configuration-and-defaults" class="anchor" href="#configuration-and-defaults" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuration and defaults</h2>
+
+<p>While <code>Octokit::Client</code> accepts a range of options when creating a new client
+instance, Octokit's configuration API allows you to set your configuration
+options at the module level. This is particularly handy if you're creating a
+number of client instances based on some shared defaults.</p>
+
+<h3><a id="user-content-configuring-module-defaults" class="anchor" href="#configuring-module-defaults" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuring module defaults</h3>
+
+<p>Every writable attribute in {Octokit::Configurable} can be set one at a time:</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c1">Octokit</span>.api_endpoint <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>http://api.github.dev<span class="pl-pds">'</span></span>
+<span class="pl-c1">Octokit</span>.web_endpoint <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>http://github.dev<span class="pl-pds">'</span></span></pre></div>
+
+<p>or in batch:</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c1">Octokit</span>.configure <span class="pl-k">do </span>|<span class="pl-smi">c</span>|
+  c.api_endpoint <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>http://api.github.dev<span class="pl-pds">'</span></span>
+  c.web_endpoint <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>http://github.dev<span class="pl-pds">'</span></span>
+<span class="pl-k">end</span></pre></div>
+
+<h3><a id="user-content-using-env-variables" class="anchor" href="#using-env-variables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using ENV variables</h3>
+
+<p>Default configuration values are specified in {Octokit::Default}. Many
+attributes will look for a default value from the ENV before returning
+Octokit's default.</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c"># Given $OCTOKIT_API_ENDPOINT is "http://api.github.dev"</span>
+<span class="pl-c1">Octokit</span>.api_endpoint
+
+<span class="pl-c"># =&gt; "http://api.github.dev"</span></pre></div>
+
+<p>Deprecation warnings and API endpoints in development preview warnings are
+printed to STDOUT by default, these can be disabled by setting the ENV
+<code>OCTOKIT_SILENT=true</code>.</p>
+
+<h2><a id="user-content-hypermedia-agent" class="anchor" href="#hypermedia-agent" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hypermedia agent</h2>
+
+<p>Starting in version 2.0, Octokit is <a href="http://en.wikipedia.org/wiki/Hypermedia">hypermedia</a>-enabled. Under the hood,
+{Octokit::Client} uses <a href="https://github.com/lostisland/sawyer">Sawyer</a>, a hypermedia client built on <a href="https://github.com/lostisland/faraday">Faraday</a>.</p>
+
+<h3><a id="user-content-hypermedia-in-octokit" class="anchor" href="#hypermedia-in-octokit" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hypermedia in Octokit</h3>
+
+<p>Resources returned by Octokit methods contain not only data but hypermedia
+link relations:</p>
+
+<div class="highlight highlight-source-ruby"><pre>user <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>.user <span class="pl-s"><span class="pl-pds">'</span>technoweenie<span class="pl-pds">'</span></span>
+
+<span class="pl-c"># Get the repos rel, returned from the API</span>
+<span class="pl-c"># as repos_url in the resource</span>
+user.rels[<span class="pl-c1">:repos</span>].href
+<span class="pl-c"># =&gt; "https://api.github.com/users/technoweenie/repos"</span>
+
+repos <span class="pl-k">=</span> user.rels[<span class="pl-c1">:repos</span>].get.data
+repos.last.name
+<span class="pl-c"># =&gt; "faraday-zeromq"</span></pre></div>
+
+<p>When processing API responses, all <code>*_url</code> attributes are culled in to the link
+relations collection. Any <code>url</code> attribute becomes <code>.rels[:self]</code>.</p>
+
+<h3><a id="user-content-uri-templates" class="anchor" href="#uri-templates" aria-hidden="true"><span class="octicon octicon-link"></span></a>URI templates</h3>
+
+<p>You might notice many link relations have variable placeholders. Octokit
+supports <a href="http://tools.ietf.org/html/rfc6570">URI Templates</a> for parameterized URI expansion:</p>
+
+<div class="highlight highlight-source-ruby"><pre>repo <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>.repo <span class="pl-s"><span class="pl-pds">'</span>pengwynn/pingwynn<span class="pl-pds">'</span></span>
+rel <span class="pl-k">=</span> repo.rels[<span class="pl-c1">:issues</span>]
+<span class="pl-c"># =&gt; #&lt;Sawyer::Relation: issues: get https://api.github.com/repos/pengwynn/pingwynn/issues{/number}&gt;</span>
+
+<span class="pl-c"># Get a page of issues</span>
+rel.get.data
+
+<span class="pl-c"># Get issue #2</span>
+rel.get(<span class="pl-c1">:uri</span> =&gt; {<span class="pl-c1">:number</span> =&gt; <span class="pl-c1">2</span>}).data</pre></div>
+
+<h3><a id="user-content-the-full-hypermedia-experience" class="anchor" href="#the-full-hypermedia-experience" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Full Hypermedia Experience™</h3>
+
+<p>If you want to use Octokit as a pure hypermedia API client, you can start at
+the API root and follow link relations from there:</p>
+
+<div class="highlight highlight-source-ruby"><pre>root <span class="pl-k">=</span> <span class="pl-c1">Octokit</span>.root
+root.rels[<span class="pl-c1">:repository</span>].get <span class="pl-c1">:uri</span> =&gt; {<span class="pl-c1">:owner</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>octokit<span class="pl-pds">"</span></span>, <span class="pl-c1">:repo</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>octokit.rb<span class="pl-pds">"</span></span> }</pre></div>
+
+<p>Octokit 3.0 aims to be hypermedia-driven, removing the internal URL
+construction currently used throughout the client.</p>
+
+<h2><a id="user-content-upgrading-guide" class="anchor" href="#upgrading-guide" aria-hidden="true"><span class="octicon octicon-link"></span></a>Upgrading guide</h2>
+
+<p>Version 4.0</p>
+
+<ul>
+<li><strong>removes support for a <a href="https://github.com/octokit/octokit.rb/commit/e48e91f736d5fce51e3bf74d7c9022aaa52f5c5c">long-deprecated overload</a> for
+passing state as a positional argument</strong> when listing pull requests. Instead,
+pass <code>state</code> in the method options.</li>
+<li><strong>drops support for Ruby &lt; 2.0</strong>.</li>
+<li>adds support for new <a href="#working-with-github-enterprise">Enterprise-only APIs</a>.</li>
+<li>adds support for <a href="https://developer.github.com/changes/2015-05-26-repository-redirects-are-coming/">Repository redirects</a>.</li>
+</ul>
+
+<p>Version 3.0 includes a couple breaking changes when upgrading from v2.x.x:</p>
+
+<p>The <a href="https://developer.github.com/changes/2014-01-07-upcoming-change-to-default-media-type/">default media type</a> is now <code>v3</code> instead of <code>beta</code>. If
+you need to request the older media type, you can set the default media type
+for the client:</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c1">Octokit</span>.default_media_type <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>application/vnd.github.beta+json<span class="pl-pds">"</span></span></pre></div>
+
+<p>or per-request</p>
+
+<div class="highlight highlight-source-ruby"><pre><span class="pl-c1">Octokit</span>.emails(<span class="pl-c1">:accept</span> =&gt; <span class="pl-s"><span class="pl-pds">"</span>application/vnd.github.beta+json<span class="pl-pds">"</span></span>)</pre></div>
+
+<p>The long-deprecated <code>Octokit::Client#create_download</code> method has been removed.</p>
+
+<h3><a id="user-content-upgrading-from-1xx" class="anchor" href="#upgrading-from-1xx" aria-hidden="true"><span class="octicon octicon-link"></span></a>Upgrading from 1.x.x</h3>
+
+<p>Version 2.0 includes a completely rewritten <code>Client</code> factory that now memoizes
+client instances based on unique configuration options. Breaking changes also
+include:</p>
+
+<ul>
+<li><code>:oauth_token</code> is now <code>:access_token</code></li>
+<li><code>:auto_traversal</code> is now <code>:auto_paginate</code></li>
+<li><code>Hashie::Mash</code> has been removed. Responses now return a <code>Sawyer::Resource</code>
+object. This new type behaves mostly like a Ruby <code>Hash</code>, but does not fully
+support the <code>Hashie::Mash</code> API.</li>
+<li>Two new client error types are raised where appropriate:
+<code>Octokit::TooManyRequests</code> and <code>Octokit::TooManyLoginAttempts</code></li>
+<li>The <code>search_*</code> methods from v1.x are now found at <code>legacy_search_*</code></li>
+<li>Support for netrc requires including the <a href="https://rubygems.org/gems/netrc">netrc gem</a> in your Gemfile or
+gemspec.</li>
+<li>DateTime fields are now proper <code>DateTime</code> objects. Previous versions outputted DateTime fields as 'String' objects.</li>
+</ul>
+
+<h2><a id="user-content-advanced-usage" class="anchor" href="#advanced-usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Advanced usage</h2>
+
+<p>Since Octokit employs <a href="https://github.com/lostisland/faraday">Faraday</a> under the hood, some behavior can be
+extended via middleware.</p>
+
+<h3><a id="user-content-debugging" class="anchor" href="#debugging" aria-hidden="true"><span class="octicon octicon-link"></span></a>Debugging</h3>
+
+<p>Often, it helps to know what Octokit is doing under the hood. You can add a
+logger to the middleware that enables you to peek into the underlying HTTP
+traffic:</p>
+
+<div class="highlight highlight-source-ruby"><pre>stack <span class="pl-k">=</span> <span class="pl-c1">Faraday</span>::<span class="pl-c1">RackBuilder</span>.<span class="pl-k">new</span> <span class="pl-k">do </span>|<span class="pl-smi">builder</span>|
+  builder.response <span class="pl-c1">:logger</span>
+  builder.use <span class="pl-c1">Octokit</span>::<span class="pl-c1">Response</span>::<span class="pl-c1">RaiseError</span>
+  builder.adapter <span class="pl-c1">Faraday</span>.default_adapter
+<span class="pl-k">end</span>
+<span class="pl-c1">Octokit</span>.middleware <span class="pl-k">=</span> stack
+<span class="pl-c1">Octokit</span>.user <span class="pl-s"><span class="pl-pds">'</span>pengwynn<span class="pl-pds">'</span></span></pre></div>
+
+<pre><code>I, [2013-08-22T15:54:38.583300 #88227]  INFO -- : get https://api.github.com/users/pengwynn
+D, [2013-08-22T15:54:38.583401 #88227] DEBUG -- request: Accept: "application/vnd.github.beta+json"
+User-Agent: "Octokit Ruby Gem 2.0.0.rc4"
+I, [2013-08-22T15:54:38.843313 #88227]  INFO -- Status: 200
+D, [2013-08-22T15:54:38.843459 #88227] DEBUG -- response: server: "GitHub.com"
+date: "Thu, 22 Aug 2013 20:54:40 GMT"
+content-type: "application/json; charset=utf-8"
+transfer-encoding: "chunked"
+connection: "close"
+status: "200 OK"
+x-ratelimit-limit: "60"
+x-ratelimit-remaining: "39"
+x-ratelimit-reset: "1377205443"
+...
+</code></pre>
+
+<p>See the <a href="https://github.com/lostisland/faraday">Faraday README</a> for more middleware magic.</p>
+
+<h3><a id="user-content-caching" class="anchor" href="#caching" aria-hidden="true"><span class="octicon octicon-link"></span></a>Caching</h3>
+
+<p>If you want to boost performance, stretch your API rate limit, or avoid paying
+the hypermedia tax, you can use <a href="https://github.com/plataformatec/faraday-http-cache">Faraday Http Cache</a>.</p>
+
+<p>Add the gem to your Gemfile</p>
+
+<pre><code>gem 'faraday-http-cache'
+</code></pre>
+
+<p>Next, construct your own Faraday middleware:</p>
+
+<div class="highlight highlight-source-ruby"><pre>stack <span class="pl-k">=</span> <span class="pl-c1">Faraday</span>::<span class="pl-c1">RackBuilder</span>.<span class="pl-k">new</span> <span class="pl-k">do </span>|<span class="pl-smi">builder</span>|
+  builder.use <span class="pl-c1">Faraday</span>::<span class="pl-c1">HttpCache</span>
+  builder.use <span class="pl-c1">Octokit</span>::<span class="pl-c1">Response</span>::<span class="pl-c1">RaiseError</span>
+  builder.adapter <span class="pl-c1">Faraday</span>.default_adapter
+<span class="pl-k">end</span>
+<span class="pl-c1">Octokit</span>.middleware <span class="pl-k">=</span> stack</pre></div>
+
+<p>Once configured, the middleware will store responses in cache based on ETag
+fingerprint and serve those back up for future <code>304</code> responses for the same
+resource. See the <a href="https://github.com/plataformatec/faraday-http-cache">project README</a> for advanced usage.</p>
+
+<h2><a id="user-content-hacking-on-octokitrb" class="anchor" href="#hacking-on-octokitrb" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hacking on Octokit.rb</h2>
+
+<p>If you want to hack on Octokit locally, we try to make <a href="http://wynnnetherland.com/linked/2013012801/bootstrapping-consistency">bootstrapping the
+project</a> as painless as possible. To start hacking, clone and run:</p>
+
+<pre><code>script/bootstrap
+</code></pre>
+
+<p>This will install project dependencies and get you up and running. If you want
+to run a Ruby console to poke on Octokit, you can crank one up with:</p>
+
+<pre><code>script/console
+</code></pre>
+
+<p>Using the scripts in <code>./scripts</code> instead of <code>bundle exec rspec</code>, <code>bundle
+console</code>, etc.  ensures your dependencies are up-to-date.</p>
+
+<h3><a id="user-content-running-and-writing-new-tests" class="anchor" href="#running-and-writing-new-tests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running and writing new tests</h3>
+
+<p>Octokit uses <a href="https://github.com/vcr/vcr">VCR</a> for recording and playing back API fixtures during test
+runs. These cassettes (fixtures) are part of the Git project in the <code>spec/cassettes</code>
+folder. If you're not recording new cassettes you can run the specs with existing
+cassettes with:</p>
+
+<pre><code>script/test
+</code></pre>
+
+<p>Octokit uses environmental variables for storing credentials used in testing.
+If you are testing an API endpoint that doesn't require authentication, you
+can get away without any additional configuration. For the most part, tests
+use an authenticated client, using a token stored in <code>ENV['OCTOKIT_TEST_GITHUB_TOKEN']</code>.
+There are several different authenticating method's used across the api.
+Here is the full list of configurable environmental variables for testing
+Octokit:</p>
+
+<table><thead>
+<tr>
+<th align="left">ENV Variable</th>
+<th align="left">Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_LOGIN</code></td>
+<td align="left">GitHub login name (preferably one created specifically for testing against).</td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_PASSWORD</code></td>
+<td align="left">Password for the test GitHub login.</td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_TOKEN</code></td>
+<td align="left"><a href="https://github.com/blog/1509-personal-api-tokens">Personal Access Token</a> for the test GitHub login.</td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_CLIENT_ID</code></td>
+<td align="left">Test OAuth application client id.</td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_CLIENT_SECRET</code></td>
+<td align="left">Test OAuth application client secret.</td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_REPOSITORY</code></td>
+<td align="left">Test repository to perform destructive actions against, this should not be set to any repository of importance. <strong>Automatically created by the test suite if nonexistent</strong> Default: <code>api-sandbox</code></td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_ORGANIZATION</code></td>
+<td align="left">Test organization.</td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_ENTERPRISE_LOGIN</code></td>
+<td align="left">GitHub Enterprise login name</td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_ENTERPRISE_TOKEN</code></td>
+<td align="left">GitHub Enterprise token</td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_ENTERPRISE_MANAGEMENT_CONSOLE_PASSWORD</code></td>
+<td align="left">GitHub Enterprise management console password</td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_ENTERPRISE_ENDPOINT</code></td>
+<td align="left">GitHub Enterprise hostname</td>
+</tr>
+<tr>
+<td align="left"><code>OCTOKIT_TEST_GITHUB_ENTERPRISE_MANAGEMENT_CONSOLE_ENDPOINT</code></td>
+<td align="left">GitHub Enterprise Management Console endpoint</td>
+</tr>
+</tbody></table>
+
+<p>Since we periodically refresh our cassettes, please keep some points in mind
+when writing new specs.</p>
+
+<ul>
+<li><strong>Specs should be idempotent</strong>. The HTTP calls made during a spec should be
+able to be run over and over. This means deleting a known resource prior to
+creating it if the name has to be unique.</li>
+<li><strong>Specs should be able to be run in random order.</strong> If a spec depends on
+another resource as a fixture, make sure that's created in the scope of the
+spec and not depend on a previous spec to create the data needed.</li>
+<li><strong>Do not depend on authenticated user info.</strong> Instead of asserting
+actual values in resources, try to assert the existence of a key or that a
+response is an Array. We're testing the client, not the API.</li>
+</ul>
+
+<h2><a id="user-content-supported-ruby-versions" class="anchor" href="#supported-ruby-versions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Supported Ruby Versions</h2>
+
+<p>This library aims to support and is <a href="https://travis-ci.org/octokit/octokit.rb">tested against</a> the following Ruby
+implementations:</p>
+
+<ul>
+<li>Ruby 2.0</li>
+<li>Ruby 2.1</li>
+<li>Ruby 2.2</li>
+</ul>
+
+<p>If something doesn't work on one of these Ruby versions, it's a bug.</p>
+
+<p>This library may inadvertently work (or seem to work) on other Ruby
+implementations, but support will only be provided for the versions listed
+above.</p>
+
+<p>If you would like this library to support another Ruby version, you may
+volunteer to be a maintainer. Being a maintainer entails making sure all tests
+run and pass on that implementation. When something breaks on your
+implementation, you will be responsible for providing patches in a timely
+fashion. If critical issues for a particular implementation exist at the time
+of a major release, support for that Ruby version may be dropped.</p>
+
+<h2><a id="user-content-versioning" class="anchor" href="#versioning" aria-hidden="true"><span class="octicon octicon-link"></span></a>Versioning</h2>
+
+<p>This library aims to adhere to <a href="http://semver.org/">Semantic Versioning 2.0.0</a>. Violations
+of this scheme should be reported as bugs. Specifically, if a minor or patch
+version is released that breaks backward compatibility, that version should be
+immediately yanked and/or a new version should be immediately released that
+restores compatibility. Breaking changes to the public API will only be
+introduced with new major versions. As a result of this policy, you can (and
+should) specify a dependency on this gem using the <a href="http://guides.rubygems.org/patterns/#pessimistic-version-constraint">Pessimistic Version
+Constraint</a> with two digits of precision. For example:</p>
+
+<pre><code>spec.add_dependency 'octokit', '~&gt; 3.0'
+</code></pre>
+
+<p>The changes made between versions can be seen on the <a href="https://github.com/octokit/octokit.rb/releases">project releases page</a>.</p>
+
+<h2><a id="user-content-license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>Copyright (c) 2009-2014 Wynn Netherland, Adam Stacoviak, Erik Michaels-Ober</p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+</article>
