@@ -9,6 +9,7 @@ class Repository < ActiveRecord::Base
   scope :disliked, -> { where(process_state: Repository.process_states[:disliked]) }
   scope :unprocessed, -> { where(process_state: nil) }
   scope :without_readme, -> { where(last_sync_readme_time: nil) }
+  scope :with_language, -> (language_id) { where(language_id: language_id) }
   scope :latest, -> { order(updated_at: 'desc') }
 
   after_create :synchronize_readme

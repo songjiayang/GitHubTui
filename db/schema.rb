@@ -13,12 +13,6 @@
 
 ActiveRecord::Schema.define(version: 20151031060139) do
 
-  create_table "add_file_name_to_readmes", force: :cascade do |t|
-    t.string   "file_name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "languages", force: :cascade do |t|
     t.string   "name"
     t.datetime "created_at", null: false

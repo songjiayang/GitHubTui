@@ -58,6 +58,13 @@ body {
   color: gray;
 }
 
+.items-bar a {
+  color: #888;
+  &:hover {
+    color: #000;
+  }
+}
+
 /* Customize container */
 @media (min-width: 768px) {
   .container {

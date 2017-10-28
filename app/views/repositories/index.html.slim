@@ -7,6 +7,17 @@
         = link_to '喜欢', repositories_path(c: :like)
       li class=( params[:c] == 'all' && 'active')
         = link_to '所有', repositories_path(c: :all)
+      li.dropdown
+        a.dropdown-toggle data-toggle="dropdown" href="#" 
+          | 语言
+          span.caret
+        ul.dropdown-menu
+          li
+            = link_to "所有", params.merge(l: nil)
+          - Language.all.each do |l|
+            li
+              = link_to l.name, params.merge(l: l.id)
+
   h3 GitHub 推
 table.table.table-bordered
   thead
@@ -15,6 +26,7 @@ table.table.table-bordered
       th 项目
       th 描述
       th 语言
+      th 关注数
   tbody
     - @items.each do |repository|
       - cache [repository, 'index'] do
@@ -27,5 +39,7 @@ table.table.table-bordered
             = repository.description
           th
             = repository.language.try(:name)
+          th
+            = repository.stargazers_count
 
 = paginate @items

@@ -1,13 +1,18 @@
 class RepositoriesController < ApplicationController
   before_action :load_resource, except: [:index]
+
   def index
-    if params[:c] == 'like'
+    case params[:c]
+    when "like"
       @items = Repository.liked
-    elsif params[:c] == 'all'
+    when "all"
       @items = Repository.all
     else
       @items = Repository.unprocessed
     end
+
+    @items = @items.with_language(params[:l]) unless params[:l].nil?
+
     @items = @items.page(params[:page]).per(20).latest
   end
 
@@ -22,7 +27,7 @@ class RepositoriesController < ApplicationController
 
   def dislike
     @repository.disliked!
-    redirect_to Repository.find(@repository.id+1)
+    redirect_to Repository.find(@repository.id + 1)
   end
 
   private
