@@ -34,7 +34,7 @@ table.table.table-bordered
           th
             = "##{repository.id}"
           th
-            = link_to repository.full_name, repository_path(repository)
+            = link_to repository.full_name, repository_path(repository), target: "_blank"
           th
             = repository.description
           th
