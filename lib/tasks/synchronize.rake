@@ -20,6 +20,6 @@ namespace :synchronize do
   desc 'fetch the last week popular repository'
   task last_week_repository: :environment do
     created_at = 7.days.ago.to_date.to_s
-    RepositoryPuller.new("stars:>100 created:>#{created_at}").perform!
+    RepositoryPuller.new("stars:>25 created:>#{created_at}").perform!
   end
 end
