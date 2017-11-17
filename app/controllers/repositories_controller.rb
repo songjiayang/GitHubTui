@@ -13,7 +13,12 @@ class RepositoriesController < ApplicationController
 
     @items = @items.with_language(params[:l]) unless params[:l].nil?
 
-    @items = @items.page(params[:page]).per(20).latest
+    case params[:s]
+    when "star"
+      @items = @items.page(params[:page]).per(20).moststar
+    else
+      @items = @items.page(params[:page]).per(20).latest
+    end
   end
 
   def show

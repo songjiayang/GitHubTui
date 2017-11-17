@@ -17,6 +17,15 @@
           - Language.all.each do |l|
             li
               = link_to l.name, params.merge(l: l.id)
+      li.dropdown
+        a.dropdown-toggle data-toggle="dropdown" href="#" 
+          | 排序
+          span.caret
+        ul.dropdown-menu
+          li
+            = link_to "最新", params.merge(s: "latest")
+          li
+            = link_to "关注人数", params.merge(s: "star")
 
   h3 GitHub 推
 table.table.table-bordered

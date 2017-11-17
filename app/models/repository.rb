@@ -11,6 +11,7 @@ class Repository < ActiveRecord::Base
   scope :without_readme, -> { where(last_sync_readme_time: nil) }
   scope :with_language, -> (language_id) { where(language_id: language_id) }
   scope :latest, -> { order(updated_at: 'desc') }
+  scope :moststar, -> { order(stargazers_count: 'desc') }
 
   after_create :synchronize_readme
 
